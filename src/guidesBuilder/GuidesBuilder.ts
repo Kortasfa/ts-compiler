@@ -32,21 +32,21 @@ export class GuidesBuilder {
     this.transitiveClosure();
 
     const lines: string[] = [];
-    
+
     for (const [left, alternatives] of this.rules) {
       const nonTermGuides = this.getGuides(left);
-      
+
       for (const alternative of alternatives) {
         const alternativeGuides = new Set<string>();
         const first = alternative[0];
-        
+
         if (first === EMPTY) {
           continue;
         }
-        
+
         if (!isTerm(first)) {
           const guides = this.getGuides(first);
-          
+
           for (const guide of guides) {
             alternativeGuides.add(guide);
             nonTermGuides.delete(guide);
@@ -55,16 +55,16 @@ export class GuidesBuilder {
           alternativeGuides.add(first);
           nonTermGuides.delete(first);
         }
-        
+
         lines.push(`${left} - ${alternative.join(' ')} / ${printContainer(alternativeGuides)}`);
       }
-      
+
       // Добавляем правила с EMPTY
       for (const alternative of alternatives.filter(alt => alt[0] === EMPTY)) {
         lines.push(`${left} - ${alternative.join(' ')} / ${printContainer(nonTermGuides)}`);
       }
     }
-    
+
     return lines.length > 0 ? lines.join('\n') : undefined;
   }
 
@@ -76,7 +76,7 @@ export class GuidesBuilder {
     for (const [left, alternatives] of this.rules) {
       this.nonTerms.add(left);
       this.lexemes.add(left);
-      
+
       for (const alternative of alternatives) {
         for (const lexeme of alternative) {
           this.lexemes.add(lexeme);
@@ -93,7 +93,7 @@ export class GuidesBuilder {
   private getGuides(nonTerm: string): Set<string> {
     const result = new Set<string>();
     const nonTermGuides = this.guides.get(nonTerm);
-    
+
     if (nonTermGuides) {
       for (const guide of nonTermGuides) {
         if (isTerm(guide)) {
@@ -101,7 +101,7 @@ export class GuidesBuilder {
         }
       }
     }
-    
+
     return result;
   }
 
@@ -114,17 +114,17 @@ export class GuidesBuilder {
       for (const alternative of alternatives) {
         const guide = alternative[0];
         let guides: Set<string>;
-        
+
         if (guide === EMPTY) {
           guides = this.getFollow(left);
         } else {
           guides = new Set([guide]);
         }
-        
+
         if (!this.guides.has(left)) {
           this.guides.set(left, new Set<string>());
         }
-        
+
         const leftGuides = this.guides.get(left)!;
         for (const g of guides) {
           leftGuides.add(g);
@@ -140,17 +140,17 @@ export class GuidesBuilder {
    */
   private getFollow(nonTerm: string): Set<string> {
     const followLexemes = new Set<string>();
-    
+
     for (const [left, alternatives] of this.rules) {
       for (const alternative of alternatives) {
         for (let i = 0; i < alternative.length; i++) {
           if (alternative[i] !== nonTerm) {
             continue;
           }
-          
+
           const isLast = i === alternative.length - 1;
           let follow: Set<string>;
-          
+
           if (isLast) {
             if (left !== nonTerm) {
               follow = this.getFollow(left);
@@ -160,14 +160,14 @@ export class GuidesBuilder {
           } else {
             follow = new Set<string>([alternative[i + 1]]);
           }
-          
+
           for (const f of follow) {
             followLexemes.add(f);
           }
         }
       }
     }
-    
+
     return followLexemes;
   }
 
@@ -181,7 +181,7 @@ export class GuidesBuilder {
         for (const lexeme of this.lexemes) {
           const nonTermGuides = this.guides.get(nonTerm);
           const kGuides = this.guides.get(k);
-          
+
           if (nonTermGuides && kGuides && nonTermGuides.has(k) && kGuides.has(lexeme)) {
             nonTermGuides.add(lexeme);
           }
