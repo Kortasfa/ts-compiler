@@ -1,28 +1,14 @@
 import { Error } from '../errors/Error';
 import { Reader } from './reader/Reader';
 import { Token, TokenType } from './token/Token';
-import { parseIdentifier, isIdChar } from './rules/Id';
-import { isDigit, parseNumber } from './rules/Number';
+import { idRule, isIdChar } from './rules/Id';
+import { digit, numberRule } from './rules/Number';
 import { checkReserved } from './rules/ReservedWords';
 import { isQuot, stringRule } from './rules/String';
 import { isSpecialChar, specialCharRule } from './rules/SpecialChars';
 
 /**
  * Лексический анализатор, который разбивает входную строку на токены
- * 
- * Лексический анализатор (Lexer) - это первый этап компиляции, 
- * который преобразует последовательность символов исходного кода
- * в последовательность токенов (лексем). 
- * 
- * Основные функции:
- * 1. Чтение входной строки символ за символом
- * 2. Распознавание токенов с помощью заданных правил
- * 3. Генерация токенов определенных типов (идентификаторы, числа, строки и т.д.)
- * 4. Обработка ошибок лексического анализа
- * 
- * Этот лексический анализатор работает с помощью набора правил для 
- * распознавания различных типов токенов, таких как идентификаторы,
- * числовые литералы, строковые литералы и специальные символы.
  */
 export class Lexer {
   private reader: Reader;
@@ -54,7 +40,7 @@ export class Lexer {
     if (isIdChar(ch)) {
       return checkReserved(this.id());
     }
-    if (isDigit(ch)) {
+    if (digit(ch)) {
       return this.number();
     }
     if (isQuot(ch)) {
@@ -97,7 +83,7 @@ export class Lexer {
   private id(): Token {
     const startPos = this.reader.count();
     this.reader.record();
-    if (!parseIdentifier(this.reader)) {
+    if (!idRule(this.reader)) {
       return {
         type: TokenType.ERROR,
         value: '',
@@ -123,7 +109,7 @@ export class Lexer {
     this.reader.record();
     const isInteger = { value: false };
     
-    if (!parseNumber(this.reader, isInteger)) {
+    if (!numberRule(this.reader, isInteger)) {
       return {
         type: TokenType.ERROR,
         value: '',

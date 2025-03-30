@@ -1,19 +1,5 @@
 /**
  * Производит посимвольное чтение и подсчет количества прочитанных символов
- * 
- * Reader - это класс, отвечающий за чтение входной строки символ за символом.
- * Он предоставляет удобный интерфейс для лексического анализатора,
- * позволяя читать символы, возвращаться назад и записывать прочитанные символы.
- * 
- * Основные возможности:
- * - Чтение символов и перемещение указателя
- * - Просмотр текущего символа без его чтения (peek)
- * - Возврат на один символ назад (unget)
- * - Запись прочитанных символов
- * - Установка позиции на произвольное место во входной строке
- * 
- * Reader служит низкоуровневым компонентом для лексического анализатора,
- * обеспечивая эффективный доступ к символам исходного кода.
  */
 export class Reader {
   private input: string;
@@ -32,8 +18,8 @@ export class Reader {
    * Получает текущий символ и перемещает указатель на следующий
    * @throws Ошибку, если достигнут конец строки
    */
-  public getNextChar(): string {
-    if (this.isAtEnd()) {
+  public get(): string {
+    if (this.empty()) {
       throw new Error('EOF Error: tried to get char from an empty reader');
     }
     
@@ -47,8 +33,8 @@ export class Reader {
   /**
    * Возвращает текущий символ, не перемещая указатель
    */
-  public peekChar(): string {
-    if (this.isAtEnd()) {
+  public peek(): string {
+    if (this.empty()) {
       return '';
     }
     
@@ -68,14 +54,14 @@ export class Reader {
   /**
    * Возвращает текущую позицию в строке
    */
-  public getCurrentPosition(): number {
+  public count(): number {
     return this.position;
   }
 
   /**
    * Проверяет, достигнут ли конец строки
    */
-  public isAtEnd(): boolean {
+  public empty(): boolean {
     return this.position >= this.input.length;
   }
 
