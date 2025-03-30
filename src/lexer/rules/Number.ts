@@ -3,28 +3,28 @@ import { Reader } from '../reader/Reader';
 /**
  * Проверяет, является ли символ цифрой
  */
-export function digit(c: string): boolean {
-  return c >= '0' && c <= '9';
+export function isDigit(character: string): boolean {
+  return character >= '0' && character <= '9';
 }
 
 /**
  * Проверяет, является ли символ цифрой, отличной от нуля
  */
-export function nonZero(c: string): boolean {
-  return c > '0' && c <= '9';
+export function isNonZero(character: string): boolean {
+  return character > '0' && character <= '9';
 }
 
 /**
  * expRem -> e | digit expRem
  */
-export function expRem(reader: Reader): boolean {
+export function parseExponentRemainder(reader: Reader): boolean {
   if (reader.empty()) {
     return true;
   }
 
-  if (digit(reader.peek())) {
+  if (isDigit(reader.peek())) {
     reader.get();
-    return expRem(reader);
+    return parseExponentRemainder(reader);
   }
 
   return true;
@@ -33,26 +33,26 @@ export function expRem(reader: Reader): boolean {
 /**
  * expVal -> nonZero expRem
  */
-export function expVal(reader: Reader): boolean {
-  return !reader.empty() && nonZero(reader.get()) && expRem(reader);
+export function parseExponentValue(reader: Reader): boolean {
+  return !reader.empty() && isNonZero(reader.get()) && parseExponentRemainder(reader);
 }
 
 /**
  * exp -> + expVal | - expVal
  */
-export function exp(reader: Reader): boolean {
+export function parseExponent(reader: Reader): boolean {
   if (reader.empty()) {
     return false;
   }
 
   const sign = reader.get();
-  return (sign === '+' || sign === '-') && expVal(reader);
+  return (sign === '+' || sign === '-') && parseExponentValue(reader);
 }
 
 /**
  * expPart -> e | e exp | E exp
  */
-export function expPart(reader: Reader, isInteger: { value: boolean }): boolean {
+export function parseExponentPart(reader: Reader, isInteger: { value: boolean }): boolean {
   if (reader.empty()) {
     return true;
   }
@@ -61,7 +61,7 @@ export function expPart(reader: Reader, isInteger: { value: boolean }): boolean 
   if (ch === 'e' || ch === 'E') {
     isInteger.value = false;
     reader.get();
-    return exp(reader);
+    return parseExponent(reader);
   }
 
   return true;
@@ -70,14 +70,14 @@ export function expPart(reader: Reader, isInteger: { value: boolean }): boolean 
 /**
  * mantissaRem -> e | digit mantissaRem
  */
-export function mantissaRem(reader: Reader): boolean {
+export function parseMantissaRemainder(reader: Reader): boolean {
   if (reader.empty()) {
     return true;
   }
 
-  if (digit(reader.peek())) {
+  if (isDigit(reader.peek())) {
     reader.get();
-    return mantissaRem(reader);
+    return parseMantissaRemainder(reader);
   }
 
   return true;
@@ -86,18 +86,18 @@ export function mantissaRem(reader: Reader): boolean {
 /**
  * mantissa -> digit mantissaRem
  */
-export function mantissa(reader: Reader): boolean {
+export function parseMantissa(reader: Reader): boolean {
   if (reader.empty()) {
     return false;
   }
 
-  return digit(reader.get()) && mantissaRem(reader);
+  return isDigit(reader.get()) && parseMantissaRemainder(reader);
 }
 
 /**
  * optMantissa -> e | .mantissa
  */
-export function optMantissa(reader: Reader, isInteger: { value: boolean }): boolean {
+export function parseOptionalMantissa(reader: Reader, isInteger: { value: boolean }): boolean {
   if (reader.empty()) {
     return true;
   }
@@ -105,29 +105,29 @@ export function optMantissa(reader: Reader, isInteger: { value: boolean }): bool
   if (reader.peek() === '.') {
     isInteger.value = false;
     reader.get();
-    return mantissa(reader);
+    return parseMantissa(reader);
   }
 
-  return !digit(reader.peek());
+  return !isDigit(reader.peek());
 }
 
 /**
  * numberRem -> e | digit numberRem | .mantissa
  */
-export function numberRem(reader: Reader, isInteger: { value: boolean }): boolean {
+export function parseNumberRemainder(reader: Reader, isInteger: { value: boolean }): boolean {
   if (reader.empty()) {
     return true;
   }
 
-  if (digit(reader.peek())) {
+  if (isDigit(reader.peek())) {
     reader.get();
-    return numberRem(reader, isInteger);
+    return parseNumberRemainder(reader, isInteger);
   }
 
   if (reader.peek() === '.') {
     isInteger.value = false;
     reader.get();
-    return mantissa(reader);
+    return parseMantissa(reader);
   }
 
   return true;
@@ -136,26 +136,29 @@ export function numberRem(reader: Reader, isInteger: { value: boolean }): boolea
 /**
  * num -> nonZero numberRem | 0 optMantissa
  */
-export function num(reader: Reader, isInteger: { value: boolean }): boolean {
+export function parseNum(reader: Reader, isInteger: { value: boolean }): boolean {
   if (reader.empty()) {
     return false;
   }
 
   const ch = reader.peek();
-  if (nonZero(ch)) {
+  if (isNonZero(ch)) {
     reader.get();
-    return numberRem(reader, isInteger);
+    return parseNumberRemainder(reader, isInteger);
   }
 
   if (ch === '0') {
     reader.get();
-    return optMantissa(reader, isInteger);
+    return parseOptionalMantissa(reader, isInteger);
   }
 
   return false;
 }
 
 /**
+ * Правила распознавания числовых литералов
+ * 
+ * Грамматика для чисел:
  * number -> num expPart
  * num -> nonZero numberRem | 0 optMantissa
  * numberRem -> e | digit numberRem | .mantissa
@@ -166,8 +169,17 @@ export function num(reader: Reader, isInteger: { value: boolean }): boolean {
  * exp -> + expVal | - expVal
  * expVal -> nonZero expRem
  * expRem -> e | digit expRem
+ * 
+ * Данная грамматика позволяет распознавать:
+ * - Целые числа: 0, 123, 456
+ * - Числа с плавающей точкой: 0.5, 123.456
+ * - Числа с экспонентой: 1e10, 2.5E-3
+ * 
+ * Параметр isInteger используется для передачи информации о том,
+ * является ли распознанное число целым или с плавающей точкой.
+ * Это важно для правильного определения типа токена.
  */
-export function numberRule(reader: Reader, isInteger: { value: boolean }): boolean {
+export function parseNumber(reader: Reader, isInteger: { value: boolean }): boolean {
   isInteger.value = true;
-  return num(reader, isInteger) && expPart(reader, isInteger);
+  return parseNum(reader, isInteger) && parseExponentPart(reader, isInteger);
 } 
