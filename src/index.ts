@@ -19,7 +19,7 @@ interface Args {
  */
 function parseArgs(args: string[]): Args {
   if (args.length !== 3) {
-    throw new Error('Incorrect number of arguments');
+    throw new Error('Неверное количество аргументов');
   }
 
   return {
@@ -33,23 +33,23 @@ function parseArgs(args: string[]): Args {
 function stringifyCompilerError(error: CompilerError): string {
   switch (error) {
     case CompilerError.NONE:
-      return 'No error';
+      return 'Нет ошибки';
     case CompilerError.UNKNOWN_SYMBOL:
-      return 'Unknown symbol';
+      return 'Неизвестный символ';
     case CompilerError.INVALID_NUMBER:
-      return 'Invalid number format';
+      return 'Неверный формат числа';
     case CompilerError.STRING_LITERAL_INCOMPLETE:
-      return 'String literal is incomplete';
+      return 'Незавершенная строка';
     case CompilerError.EMPTY_INPUT:
-      return 'Empty input';
+      return 'Пустой ввод';
     case CompilerError.INVALID_ID:
-      return 'Invalid identifier';
+      return 'Неверный идентификатор';
     case CompilerError.TERM_EXPECTED:
-      return 'Term expected';
+      return 'Ожидается терм';
     case CompilerError.PARAN_CLOSE_EXPECTED:
-      return 'Closing parenthesis expected';
+      return 'Ожидается закрывающая скобка';
     default:
-      return `Unknown error code: ${error}`;
+      return `Неизвестный код ошибки: ${error}`;
   }
 }
 
@@ -62,27 +62,27 @@ async function main() {
     const { inputFileName } = parseArgs(process.argv);
     
     // Чтение правил из файла
-    console.log(`Reading grammar rules from ${inputFileName}...`);
+    console.log(`Чтение правил грамматики из файла ${inputFileName}...`);
     const rawRules = fs.readFileSync(inputFileName, 'utf8');
     
     // Построение направляющих множеств
-    console.log('Building guided rules...');
+    console.log('Построение направляющих множеств...');
     const guidesBuilder = new GuidesBuilder(rawRules);
     const guidedRules = guidesBuilder.buildGuidedRules();
     
     if (!guidedRules) {
-      throw new Error('Failed to build guided rules');
+      throw new Error('Не удалось построить направляющие множества');
     }
     
     // Построение таблицы парсера
-    console.log('Building parsing table...');
+    console.log('Построение таблицы парсинга...');
     const tableBuilder = new TableBuilder(guidedRules);
     const table = tableBuilder.buildTable();
 
     console.log(table);
     
     // Создание LL-парсера
-    console.log('Creating LL-parser...');
+    console.log('Создание LL-парсера...');
     const parser = new LLParser(table);
     
     // Настройка интерфейса для чтения из stdin
@@ -91,7 +91,7 @@ async function main() {
       output: process.stdout
     });
     
-    console.log('\nEnter expressions to parse (press Ctrl+C to exit):');
+    console.log('\nВведите выражения для разбора (нажмите Ctrl+C для выхода):');
     
     // Чтение строк из stdin
     for await (const line of rl) {
@@ -102,14 +102,14 @@ async function main() {
         console.log('OK');
       } else {
         const error = parser.getError();
-        console.log(`Error: ${stringifyError(error)}`);
+        console.log(`Ошибка: ${stringifyError(error)}`);
       }
       
-      console.log('\nEnter another expression (press Ctrl+C to exit):');
+      console.log('\nВведите другое выражение (нажмите Ctrl+C для выхода):');
     }
     
   } catch (error) {
-    console.error(error instanceof Error ? error.message : 'Unknown error');
+    console.error(error instanceof Error ? error.message : 'Неизвестная ошибка');
     process.exit(1);
   }
 }
@@ -117,7 +117,7 @@ async function main() {
 // Запуск основной функции
 if (require.main === module) {
   main().catch(error => {
-    console.error('Unhandled error:', error);
+    console.error('Необработанная ошибка:', error);
     process.exit(1);
   });
 }

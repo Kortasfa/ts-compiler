@@ -1,6 +1,6 @@
-<S> -> E
-<E> -> T <E'>
-<E'> -> + T <E'> | - T <E'> | e
-<T> -> F <T'>
-<T'> -> * F <T'> | / F <T'> | e
-<F> -> id | num | ( E ) 
+<S> -> <E> #
+<E> -> <T> <E'>
+<E'> -> OP_PLUS <T> <E'> | OP_MINUS <T> <E'> | e
+<T> -> <F> <T'>
+<T'> -> OP_MUL <F> <T'> | OP_DIV <F> <T'> | e
+<F> -> id | int | float | LPAREN <E> RPAREN

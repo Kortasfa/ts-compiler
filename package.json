@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/index.ts",
+    "start-simple": "ts-node test-expression-simple.ts",
     "test": "jest",
     "test:watch": "jest --watch"
   },

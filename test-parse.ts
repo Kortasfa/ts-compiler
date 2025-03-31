@@ -4,53 +4,52 @@ import { LLParser } from './src/LLParser/LLParser';
 import { stringifyError } from './src/LLParser/error/StringifyError';
 import * as fs from 'fs';
 
-// Define a grammar that uses token types, not literals
+// Определяем очень простую грамматику для тестирования парсера
 const rawRules = `
-<Z> -> <S> #
-<S> -> id
-<S> -> int
+<S> -> <A> #
+<A> -> id <B>
+<B> -> id <A> | e
 `;
 
-console.log('Building guided rules...');
+console.log('Построение направляющих множеств...');
 const guidesBuilder = new GuidesBuilder(rawRules);
 const guidedRules = guidesBuilder.buildGuidedRules();
 
 if (!guidedRules) {
-  console.error('Failed to build guided rules');
+  console.error('Не удалось построить направляющие множества');
   process.exit(1);
 }
 
-console.log('Guided rules:');
+console.log('\nНаправляющие множества:');
 console.log(guidedRules);
 
-console.log('\nBuilding parsing table...');
+console.log('\nПостроение таблицы парсинга...');
 const tableBuilder = new TableBuilder(guidedRules);
 const table = tableBuilder.buildTable();
 
-console.log('Table:');
-console.log(table);
-
-console.log('\nCreating parser...');
+console.log('\nСоздание парсера...');
 const parser = new LLParser(table);
 
-// Test parsing
+// Тестирование парсинга
 const testParse = (input: string) => {
-  console.log(`\nParsing: "${input}"`);
+  console.log(`\nАнализ: "${input}"`);
   const result = parser.parse(input);
   
   if (result) {
-    console.log('ACCEPTED');
+    console.log('ПРИНЯТО');
   } else {
     const error = parser.getError();
-    console.log(`REJECTED: ${stringifyError(error)}`);
+    console.log(`ОТКЛОНЕНО: ${stringifyError(error)}`);
   }
 };
 
-// Test various inputs
-testParse('a');       // Should be accepted as ID
-testParse('xyz');     // Should be accepted as ID
-testParse('123');     // Should be accepted as INTEGER
-testParse('a+b');     // Should be rejected (no '+' in grammar)
-testParse('');        // Should be rejected (empty input)
+// Тестируем различные выражения
+testParse('a');          // a - идентификатор
+testParse('a b');        // a и b - идентификаторы (a id b)
+testParse('a b c');      // a, b и c - идентификаторы (a id b id c)
+testParse('a b c d');    // a, b, c и d - идентификаторы (a id b id c id d)
+testParse('');           // Неверно, пустой ввод
+testParse('a a');        // Неверно, ожидается идентификатор после идентификатора
+testParse('a b c d e');  // Неверно, слишком много идентификаторов
 
-console.log('\nAll tests completed!'); 
+console.log('\nВсе тесты завершены!'); 

@@ -1,22 +1,22 @@
-# Handling Special Characters in Grammar Rules
+# Обработка специальных символов в правилах грамматики
 
-## Problem
+## Проблема
 
-When working with the `TableBuilder` class and parsing grammar rules, we encountered issues with special characters that serve dual purposes:
+При работе с классом `TableBuilder` и разборе правил грамматики мы столкнулись с проблемами, связанными со специальными символами, которые выполняют двойную функцию:
 
-1. The `-` (minus) character is used both as an operator in expressions and as a separator in rule definitions.
-2. The `/` (slash) character is used both as a division operator and as a separator between right side rules and guides.
+1. Символ `-` (минус) используется как оператор в выражениях и как разделитель в определениях правил.
+2. Символ `/` (слеш) используется как оператор деления и как разделитель между правилами правой части и направляющими множествами.
 
-This creates conflicts when parsing the grammar rules in the `ParseRules` module.
+Это создает конфликты при разборе правил грамматики в модуле `ParseRules`.
 
-## Solution Approaches
+## Подходы к решению
 
-### 1. Token Names Instead of Symbols
+### 1. Имена токенов вместо символов
 
-Use token names instead of actual symbols in grammar rules, then replace them with actual symbols after guided rules have been built but before creating the table:
+Используйте имена токенов вместо фактических символов в правилах грамматики, затем замените их фактическими символами после построения направляющих множеств, но перед созданием таблицы:
 
 ```typescript
-// Original grammar with token names
+// Исходная грамматика с именами токенов
 const rawRules = `
 <S> -> <E> #
 <E> -> <T> <E'>
@@ -26,11 +26,11 @@ const rawRules = `
 <F> -> id | int | float | LPAREN <E> RPAREN
 `;
 
-// Build guides
+// Построение направляющих множеств
 const guidesBuilder = new GuidesBuilder(rawRules);
 const guidedRules = guidesBuilder.buildGuidedRules();
 
-// Replace token names with actual symbols
+// Замена имен токенов фактическими символами
 const fixedRules = guidedRules
   .replace(/OP_PLUS/g, '+')
   .replace(/OP_MINUS/g, '-')
@@ -40,12 +40,12 @@ const fixedRules = guidedRules
   .replace(/RPAREN/g, ')');
 ```
 
-### 2. Enhanced Rule Parsing
+### 2. Улучшенный разбор правил
 
-Modify the `parseRules` function in `TableBuilder/parseRules/ParseRules.ts` to handle special cases for operators:
+Измените функцию `parseRules` в `TableBuilder/parseRules/ParseRules.ts`, чтобы обрабатывать особые случаи для операторов:
 
 ```typescript
-// Handle the line differently if it contains a rule with a minus sign
+// Обрабатываем строку по-разному, если она содержит правило со знаком минус
 const ruleIndex = line.indexOf(' - ');
 if (ruleIndex !== -1) {
   nonTerm = line.substring(0, ruleIndex).trim();
@@ -60,11 +60,11 @@ if (ruleIndex !== -1) {
 }
 ```
 
-Similarly, for the slash operator, we can modify `getRuleRightSide`:
+Аналогично для оператора слеша, мы можем изменить `getRuleRightSide`:
 
 ```typescript
 if (str.trim().startsWith('- ') || str.trim() === '-') {
-  // This is a rule that starts with a minus sign
+  // Это правило, которое начинается со знака минус
   const slashIndex = str.indexOf('/');
   if (slashIndex === -1) {
     throw new Error(`Invalid rule format (missing guide separator): ${str}`);
@@ -75,12 +75,12 @@ if (str.trim().startsWith('- ') || str.trim() === '-') {
 }
 ```
 
-### 3. Simplify Grammar
+### 3. Упрощение грамматики
 
-For cases where special characters cause issues, you can simplify the grammar to avoid problematic operators:
+Для случаев, когда специальные символы вызывают проблемы, вы можете упростить грамматику, чтобы избежать проблемных операторов:
 
 ```typescript
-// Simplified grammar without problematic operators
+// Упрощенная грамматика без проблемных операторов
 const rawRules = `
 <S> -> <E> #
 <E> -> <T> <E'>
@@ -91,16 +91,16 @@ const rawRules = `
 `;
 ```
 
-## Recommendations
+## Рекомендации
 
-1. **Use token names**: When defining grammar rules, prefer using token names like `OP_PLUS` instead of `+`.
+1. **Используйте имена токенов**: При определении правил грамматики предпочитайте использовать имена токенов, такие как `OP_PLUS` вместо `+`.
 
-2. **Replace before building table**: If you use token names, replace them with actual symbols after building guided rules but before constructing the table.
+2. **Замена перед построением таблицы**: Если вы используете имена токенов, замените их фактическими символами после построения направляющих множеств, но перед созданием таблицы.
 
-3. **Modify parsers**: Ensure your parsing logic can handle special cases for operators that overlap with syntax.
+3. **Модификация парсеров**: Убедитесь, что ваша логика разбора может обрабатывать особые случаи для операторов, которые совпадают с синтаксисом.
 
-4. **Escape characters**: Consider introducing escape mechanisms for special characters in your grammar notation.
+4. **Экранирование символов**: Рассмотрите возможность введения механизмов экранирования для специальных символов в обозначениях вашей грамматики.
 
-5. **Better separators**: Instead of overloading `-` and `/`, consider using different characters like `=>` for rules and `||` for guides.
+5. **Лучшие разделители**: Вместо перегрузки `-` и `/`, рассмотрите возможность использования других символов, таких как `=>` для правил и `||` для направляющих множеств.
 
-By following these recommendations, you can avoid conflicts between operators and syntax symbols in your grammar definitions. 
+Следуя этим рекомендациям, вы можете избежать конфликтов между операторами и синтаксическими символами в определениях вашей грамматики. 

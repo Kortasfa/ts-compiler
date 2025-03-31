@@ -25,25 +25,25 @@ export namespace raw {
 export function parseRawRules(input: string): raw.Rules {
   const rules: raw.Rules = [];
   const lines = input.split('\n');
-  
+
   for (const line of lines) {
     if (!line.trim()) {
       continue;
     }
-    
+
     const parts = line.trim().split(/\s*->\s*/);
     if (parts.length !== 2) {
       throw new Error(`Invalid rule format: ${line}`);
     }
-    
+
     const nonTerm = parts[0].trim();
     const rawAlternativesStr = parts[1].trim();
-    
+
     // Разбиваем на альтернативы через |
     const rawAlternatives = rawAlternativesStr.split('|').map(alt => {
       return alt.trim().split(/\s+/).filter(Boolean);
     });
-    
+
     const existingRule = rules.find(([nt]) => nt === nonTerm);
     if (existingRule) {
       existingRule[1].push(...rawAlternatives);
@@ -51,6 +51,6 @@ export function parseRawRules(input: string): raw.Rules {
       rules.push([nonTerm, rawAlternatives]);
     }
   }
-  
+
   return rules;
 } 
